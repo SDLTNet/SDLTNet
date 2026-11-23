@@ -35,8 +35,8 @@ class myViT(nn.Module):
         self.to_latent = nn.Identity()
 
         self.mlp_head = nn.Sequential(
-            nn.LayerNorm(512),
-            nn.Linear(512, num_classes)
+            nn.LayerNorm(dim),
+            nn.Linear(dim, num_classes)
             # nn.Softmax(dim=-1)
         )
 
