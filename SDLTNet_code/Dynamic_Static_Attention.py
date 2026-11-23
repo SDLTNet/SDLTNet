@@ -40,13 +40,23 @@ class Dynamic_Static_Attention(nn.Module):
             corr: [B, h, N, N]
         """
         B, h, N, D = x.shape
-        mean = x.mean(dim=-1, keepdim=True)         # [B,h,N,1]
-        x_centered = x - mean                       # Mean centering
-        numerator = einsum('b h i d, b h j d -> b h i j', x_centered, x_centered)  # Covariance
-        std = torch.sqrt((x_centered**2).sum(dim=-1, keepdim=True) + self.eps)     # [B,h,N,1]
-        denominator = torch.matmul(std, std.transpose(-2, -1))                     # [B,h,N,N]
-        corr = numerator / (denominator + self.eps)
-        return corr
+
+        with torch.autocast(device_type=x.device.type, enabled=False):
+            x_fp32 = x.float()
+            x_centered = x_fp32 - x_fp32.mean(dim=-1, keepdim=True)
+
+            numerator = einsum(
+                'b h i d, b h j d -> b h i j',
+                x_centered,
+                x_centered,
+            )
+            std = torch.sqrt(
+                x_centered.square().sum(dim=-1, keepdim=True) + self.eps
+            )
+            denominator = torch.matmul(std, std.transpose(-2, -1))
+            corr = numerator / (denominator + self.eps)
+
+        return corr.to(dtype=x.dtype)
 
     def forward(self, x):
         """
