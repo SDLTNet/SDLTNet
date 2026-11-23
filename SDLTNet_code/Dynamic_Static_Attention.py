@@ -1,3 +1,7 @@
+import torch
+from torch import nn, einsum
+from einops import rearrange
+
 class Dynamic_Static_Attention(nn.Module):
     def __init__(self, dim, heads=8, dim_head=64, dropout=0., alpha=0.5, eps=1e-8):
         """
